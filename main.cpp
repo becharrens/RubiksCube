@@ -1,4 +1,5 @@
 #include <iostream>
+#include <regex>
 #include "RubiksCube.h"
 
 using namespace std;
@@ -9,6 +10,12 @@ using namespace std;
 
 #include "LinkedListTests.h"
 #include "SwapIndicesTuple.h"
+
+string::iterator applyNextMove(string moves, string::iterator iter);
+string::iterator applyNextMove(string moves, string::iterator iter);
+
+static const regex faceMove("[ULFDRB](2| |$)", regex_constants::icase);
+static const regex internalMove("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)", regex_constants::icase);
 
 string mapIdxToCoords(int idx) {
   return to_string(idx / side) + ", " + to_string(idx % side);
@@ -103,6 +110,186 @@ void printCube(int ***cube, int _side) {
 }
 
 
+Piece ***alloc3D(int s) {
+  Piece ***arr = new Piece **[s];
+  arr[0] = new Piece *[s * s];
+  arr[0][0] = new Piece[s * s * s];
+  for (int i = 1; i < s; ++i) {
+    arr[i] = arr[i - 1] + s;
+    arr[i][0] = arr[i - 1][0] + (s * s);
+  }
+  for (int i = 0; i < s; ++i) {
+    for (int j = 1; j < s; ++j) {
+      arr[i][j] = arr[i][j - 1] + s;
+    }
+  }
+  return arr;
+}
+
+string::iterator getNext(string s, string::iterator iter) {
+  cout << *iter;
+  return ++iter;
+}
+
+void iteratorTest() {
+  string s = "H";
+  string::iterator iter = s.begin();
+  while (iter < s.end()) {
+    iter = getNext(s, iter);
+  }
+}
+
+bool validateMoveSequence(const char *moves) {
+  int nOpenBraces = 0;
+  regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
+  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|((\\)[1-9]([0-9]*)?)+)).*", regex_constants::icase);
+  regex separator("( |$).*");
+  for (int i = 0; i < strlen(moves); i++) {
+//    cout << *(moves + i) << endl;
+    if (!isspace(*(moves + i))) {
+      //If invalid character then the whole move sequence is invalid
+      if (regex_match((moves + i), invalidChar)) {
+        return false;
+      }
+      //Take into account all consecutive opening braces, keeping track of them
+      //as it skips over them
+      while (*(moves + i) == '(') {
+        nOpenBraces++;
+        i++;
+      }
+      //If the string matches the move regex then skip the the move and update
+      //the iterator (i)
+      if (regex_match((moves + i), moveRegex)) {
+        //The previous match guarantees that there is a valid move, followed
+        //a space, end of line character or any number of nested closing
+        //brackets followed by numbers indicating how many times the moves
+        //inside the brackets should be repeated. Hence the move finishes when
+        //the iteration meets a space or EOL character (the closing brace(s) is
+        //taken to be part of the move). The loop terminates at a non-move
+        //character, which means that increasing the iterator won't skip over an
+        //important character
+        while (!regex_match((moves + i), separator)) {
+          if (*(moves + i) == ')') {
+            nOpenBraces--;
+            if (nOpenBraces < 0) {
+              //Too many closing braces
+              return false;
+            }
+          }
+          i++;
+        }
+      } else {
+        return false;
+      }
+    }
+  }
+  return (nOpenBraces <= 0);
+}
+
+//bool validateMoveSequence(string moves) {
+//  int nOpenBraces = 0;
+//  regex invalidChar("([^(ULFDRB0-9\\(\\))])", regex_constants::icase);
+//  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|\\))", regex_constants::icase);
+//  string::iterator strIter = moves.begin();
+//  while (strIter != moves.end()) {
+//    cout << to_string(*strIter) << endl;
+//    if (!isspace(*strIter)) {
+//      if (regex_match(string(1, *strIter), invalidChar)) {
+//        return false;
+//      }
+//      if (*strIter == '(') {
+//        nOpenBraces++;
+//      }
+////      else if (regex_match()) {
+////
+////      }
+//    }
+//    strIter++;
+//  }
+//  return false;
+//}
+
+moveName getMoveName(char c) {
+  switch (c) {
+    case 'U':
+    case 'u':
+      return U;
+    case 'L':
+    case 'l':
+      return L;
+    case 'F':
+    case 'f':
+      return F;
+    case 'D':
+    case 'd':
+      return D;
+    case 'R':
+    case 'r':
+      return R;
+    case 'B':
+    case 'b':
+      return B;
+    default:
+      return INVALID;
+  }
+}
+
+
+
+/**
+ * PRE: *iter == '('
+ * @param moves A string containing the move sequence, following the syntax
+ * rules for Rubic's cube moves
+ * @param iter string iterator for moves, placed at an opening bracket in the
+ * string
+ * @return An iterator pointing to the next character after the parsed move
+ * sequence
+ */
+//string::iterator parseMoveSequence(string moves, string::iterator startIter,
+//                                   int count) {
+//  if (*startIter != '(') {
+//    return startIter;
+//  }
+//  startIter = skipSpaces(moves, startIter);
+//  string::iterator iter;
+//  bool repeat;
+//  do {
+//    iter = applyNextMove(moves, iter);
+//    iter = skipSpaces(moves, iter);
+//  } while (*iter != ')');
+//  iter++;
+//  int nRepetitions = *iter - '0';
+////  if (isInRange(nR));
+//  return nullptr;
+//}
+
+string::iterator applyNextMove(string moves, string::iterator iter) {
+  while (*iter == ' ' && iter < moves.end()) {
+    iter++;
+  }
+  int displaceMent;
+  if (*iter == '(') {
+//    iter = parseMoveSequence(moves, iter);
+  } else if (!isalnum(*iter)) {
+    while (*iter != ' ' && iter < moves.end()) {
+      iter++;
+    }
+    return iter;
+//    moveName move = getMoveName(*iter);
+//    iter++;
+  } else if (isnumber(*iter)){
+
+  }
+}
+
+
+bool applyMoves(string moves) {
+  string::iterator iter = moves.begin();
+  while (*iter == ' ') {
+    iter++;
+  }
+
+}
 
 int main() {
 //  cout << "Hello, World!" << endl;
@@ -157,12 +344,15 @@ int main() {
   cout << 1 - map(0) <<  " " << 1 - map(1) << " " << 1 - map(2) << " \n";
   cout << map2(0) <<  " " << map2(1) << " " << map2(2) << " \n\n\n";
   RubiksCube c(3);
-  c.print();
-  for (int l = 0; l < 4; ++l) {
-    c.move(XY, 1, ANTI_CLOCKWISE);
-    c.print();
+//  c.print();
+//  for (int l = 0; l < 1; ++l) {
+//    for (int i = 0; i < 3; ++i) {
+//      c.move(YZ, i, CLOCKWISE);
+//      cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//    }
+//    c.print();
 //    c.move(YZ, 1, CLOCKWISE);
-  }
+//  }
   cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
 //  c.print();
 //  c.move(YZ, 2, CLOCKWISE);
@@ -176,7 +366,41 @@ int main() {
 //  c.print();
 //  c.move(XY, 0, ANTI_CLOCKWISE);
 //  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-  c.print();
+//  c.print();
+//  iteratorTest();
+//  string regex_str = "([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)";
+//  string regex_str = "[^\\s]+";
+//  regex r1(regex_str, regex_constants::icase);
+//  string s = "U u2 (2u 3F F2)4 F$ F4 b2 L 2R ";
+//  sregex_iterator iter(s.begin(), s.end(), r1);
+//  sregex_iterator rEnd;
+//  while (iter != rEnd) {
+//    cout << iter->str() << endl;
+//    iter++;
+//  }
+  string s = " /%[f(pL";
+//  regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
+//  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|\\))", regex_constants::icase);
+  const char arrS[] = " /%[f(pL";
+  const char arrMoves[][30] =
+      {"((((2F2)3)4)5)6",           //Valid: Nested Brackets
+       "(2F) R2 2d",                //Invalid: Brackets without number
+       "((F r2)3 L2)2 U)4",         //Invalid: Too many closing brackets
+       "(F (R2 (F (20b2 D)3 D)4 R", //Invalid: Too many opening brackets
+       "(R2 2F)3 (R U2)300 l2",     //Valid: Brackets and moves
+       "(D2 G2 R2 L u d)",          //Invalid: Invalid moves
+       "D3 d r2 b3",                //Invalid: Non-2 number after move
+       "2(R2 L2 2R2 U2)2 D L U2"};  //Invalid: Number before opening braces
+//  for (int i = 0; i < strlen(arrS); i++) {
+//    if (regex_match((arrS + i), invalidChar)) {
+//      cout << false << endl;
+//    } else {
+//      cout << true << endl;
+//    }
+//  }
+  for (int l = 0; l < 8; ++l) {
+    cout << ((validateMoveSequence(arrMoves[l]))?"Valid":"Invalid") << endl;
+  }
   return 0;
 }
 

@@ -27,13 +27,28 @@ bool isInRange(int val, int lBound, int uBound) {
  *    0    |     1    |     2
  *    1    |     0    |     2
  *    2    |     0    |     1
- * @param coord
- * @param skipIdx
- * @param firstVal
- * @param secondVal
- * @param skipIdxVal
+ * @param coord A pointer to an array with space for at least 3 elements
+ * @param skipIdx The index which the function will skip. It should be 0, 1 or 2
+ * @param firstVal The first value to be assigned
+ * @param secondVal The second value to be assigned
  */
 void assignCoord(int *coord, int skipIdx, int firstVal, int secondVal) {
   coord[(skipIdx == 0) ? 1 : 0] = firstVal;
   coord[(skipIdx == 2) ? 1 : 2] = secondVal;
+}
+
+/**
+ * This function skips all the spaces starting from the element the iterator
+ * points to and returns an iterator pointing to the first non-space character
+ * in the string or, if there isn't one, s.end()
+ * @param s the string which is being iterated through
+ * @param iter the iterator pointing to the starting element of the iteration
+ * @return An iterator to the first non-space character in the string or s.end()
+ * if there are none
+ */
+string::iterator skipSpaces(string s, string::iterator iter) {
+  while (isspace(*iter) && iter < s.end()) {
+    iter++;
+  }
+  return iter;
 }

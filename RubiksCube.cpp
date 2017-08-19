@@ -12,8 +12,8 @@
 RubiksCube::RubiksCube(int side) {
   //Allocate space for the cube
   this->side = side;
-  cube = allocateCube(side);
-  //TODO: Initialise to solved state
+  cube = alloc3DArray<Piece>(side, side, side);
+//  cube = allocateCube(side);
   initSolvedCube();
 }
 
@@ -29,9 +29,12 @@ RubiksCube::RubiksCube(int side) {
 void RubiksCube::rotateFace(plane rotPlane, int slice, rotationDir direction) {
   //A function pointer to the function which will set up the indices for the
   //swaps to carry out the rotation
-  void (*getRotationIndices) (int **, plane, int, int, int);
+//  void (*getRotationIndices) (int **, plane, int, int, int);
   //An array which holds the coordinates of the four pieces to rotate on each
   //iteration
+  if (!isInRange(slice, side, 0)) {
+    throw out_of_range("Trying to rotate a slice out of bounds");
+  }
   int **swapIndices = alloc2DArray<int>(SIDES_IN_SQUARE, 3);
   //Fix the coordinate which defines the plane of the cube to rotate
   for (int i = 0; i < 4; ++i) {
@@ -39,34 +42,34 @@ void RubiksCube::rotateFace(plane rotPlane, int slice, rotationDir direction) {
   }
   //Assign the function pointer which will assign the correct values to the
   //indices
-  switch (direction) {
-    case CLOCKWISE:
-      getRotationIndices = &getClockwiseRotationIndices;
-      break;
-    default:
-      //ANTI_CLOCKWISE case
-      getRotationIndices = &getAntiClockwiseRotationIndices;
-  }
+//  switch (direction) {
+//    case CLOCKWISE:
+//      getRotationIndices = &getClockwiseRotationIndices;
+//      break;
+//    default:
+//      //ANTI_CLOCKWISE case
+//      getRotationIndices = &getAntiClockwiseRotationIndices;
+//  }
   //Iterates through the rows of the top half of the slice of the rubik's cube
   for (int i = 0; i < side / 2; ++i) {
     //Iterates through the columns of each inner layer of the cube's slice
     for (int j = i; j < side - i - 1; ++j) {
       //Assigns the indices of the four pieces which are to be rotated
-      getRotationIndices(swapIndices, rotPlane, i, j, side);
+      getRotationIndices(swapIndices, rotPlane, slice, side, direction, i, j);
       //Fix the orientation of the pieces which will be rotated
       for (int k = 0; k < SIDES_IN_SQUARE; k++) {
         cube[swapIndices[k][0]][swapIndices[k][1]][swapIndices[k][2]]
             .rotateColours(rotPlane);
       }
       //DEBUG
-//      cout << "\n";
-//      for (int l = 0; l < 4; ++l) {
-//        for (int m = 0; m < 3; ++m) {
-//          cout << swapIndices[l][m] << " ";
-//        }
-//        cout << "\n";
-//      }
-//      cout << "\n\n";
+      cout << "\n";
+      for (int l = 0; l < 4; ++l) {
+        for (int m = 0; m < 3; ++m) {
+          cout << swapIndices[l][m] << " ";
+        }
+        cout << "\n";
+      }
+      cout << "\n\n";
       //DEBUG
       //Performs the three swaps to rotate the 4 pieces
       swapPieces(swapIndices[0], swapIndices[3]);
@@ -301,4 +304,27 @@ void RubiksCube::printFaceName(faceName face) {
 
 void RubiksCube::move(plane rotPlane, int slice, rotationDir direction) {
   rotateFace(rotPlane, slice, direction);
+}
+
+void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
+                                    int side, rotationDir direction,
+                                    int r, int c) {
+  assignCoord(indicesArr[0], rotPlane, r, c);
+  assignCoord(indicesArr[3], rotPlane, side - r - 1, side - c - 1);
+  bool isClockwise = direction == CLOCKWISE;
+  bool sliceInFirstHalf = slice < side / 2;
+  bool isPlaneXZ = rotPlane == XZ;
+  if ((FIRST_ORDERING_COND(!isClockwise, sliceInFirstHalf, isPlaneXZ)) ||
+      (FIRST_ORDERING_COND(isClockwise, !sliceInFirstHalf, isPlaneXZ))) {
+    //Clockwise
+    cout << "0 1 2 3" << endl;
+    assignCoord(indicesArr[1], rotPlane, c, side - r - 1);
+    assignCoord(indicesArr[2], rotPlane, side - c - 1, r);
+  } else {
+    //anti
+    cout << "0 2 1 3" << endl;
+    assignCoord(indicesArr[1], rotPlane, side - c - 1, r);
+    assignCoord(indicesArr[2], rotPlane, c, side - r - 1);
+  }
+
 }

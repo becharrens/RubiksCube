@@ -10,10 +10,15 @@
 #include "Utils.h"
 
 #define SIDES_IN_SQUARE 4
+#define FIRST_ORDERING_COND(isClockwise, isInFirstHalf, isPlaneXZ) isClockwise && (XOR(isInFirstHalf, isPlaneXZ))
 
 typedef enum roationDir {
     CLOCKWISE, ANTI_CLOCKWISE
 } rotationDir;
+
+typedef enum moveName {
+    U, L, F, D, R, B, INVALID
+} moveName;
 
 typedef enum faceName {
     UP, LEFT, FRONT, DOWN, RIGHT, BACK
@@ -52,6 +57,8 @@ class RubiksCube {
     Piece ***allocateCube(int side);
     void swapPieces(int *coord1, int *coord2);
     void initSolvedCube();
+    void getRotationIndices(int **indicesArr, plane rotPlane, int slice,
+                            int side, rotationDir direction, int r, int c);
     static void getClockwiseRotationIndices(int **indicesArr, plane rotPlane,
                                      int r, int c, int side);
     static void getAntiClockwiseRotationIndices(int **indicesArr, plane rotPlane,

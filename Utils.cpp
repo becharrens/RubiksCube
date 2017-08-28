@@ -4,12 +4,14 @@
 
 #include "Utils.h"
 
+using namespace std;
+
 /**
  * Checks if a given value is within a range, that is, if it is greater than or
  * equal to the lower bound and strictly less than the upper bound
  * @param val - The value to check if it is within the given range
- * @param uBound - The upper bound of the range
  * @param lBound -  The lower bound of the range
+ * @param uBound - The upper bound of the range
  * @return Whether the value is greater than or equal to the lower bound and
  * strictly less than the upper bound
  */

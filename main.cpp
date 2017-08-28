@@ -2,7 +2,6 @@
 #include <regex>
 #include "RubiksCube.h"
 
-using namespace std;
 #define side 3
 #define length 4
 #define map(x) (x * x) % 3
@@ -10,6 +9,8 @@ using namespace std;
 
 #include "LinkedListTests.h"
 #include "SwapIndicesTuple.h"
+
+using namespace std;
 
 string::iterator applyNextMove(string moves, string::iterator iter);
 string::iterator applyNextMove(string moves, string::iterator iter);
@@ -139,11 +140,38 @@ void iteratorTest() {
   }
 }
 
+
+faceName charToFace(char face) {
+  switch (face) {
+    case 'U':
+      return UP;
+    case 'L':
+      return LEFT;
+    case 'F':
+      return FRONT;
+    case 'D':
+      return DOWN;
+    case 'R':
+      return RIGHT;
+    case 'B':
+      return BACK;
+    default:
+      return VOID;
+  }
+}
+
+bool isValidSlice(int slice, faceName face) {
+  return ((slice >= 0) && (slice < side / 2)) ||
+      (((face + 1) / 3 == 1) && slice == side / 2);
+}
+
 bool validateMoveSequence(const char *moves) {
   int nOpenBraces = 0;
   regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
   regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|((\\)[1-9]([0-9]*)?)+)).*", regex_constants::icase);
   regex separator("( |$).*");
+  int slice;
+  char *savePtr;
   for (int i = 0; i < strlen(moves); i++) {
 //    cout << *(moves + i) << endl;
     if (!isspace(*(moves + i))) {
@@ -157,6 +185,7 @@ bool validateMoveSequence(const char *moves) {
         nOpenBraces++;
         i++;
       }
+
       //If the string matches the move regex then skip the the move and update
       //the iterator (i)
       if (regex_match((moves + i), moveRegex)) {
@@ -168,6 +197,29 @@ bool validateMoveSequence(const char *moves) {
         //taken to be part of the move). The loop terminates at a non-move
         //character, which means that increasing the iterator won't skip over an
         //important character
+
+        slice = (int) strtol(moves + i, &savePtr, 10);
+        //If a slice has been assigned with value <= 1 with the pointer having
+        //moved, it means that the move was invalid
+        if ((slice <= 1 && savePtr >  moves + i)) {
+          return false;
+        }
+        //If the pointer didn't move, it means that the slice to move is an
+        //outer slice, it is already 0, otherwise, it is one more than the index
+        //of the slice referenced
+        if (slice != 0) {
+          slice--;
+        }
+        //Update the offset so that the pointer will point to the next character
+        i = (int) (savePtr - moves);
+        //Check if the slice referenced is within the bounds for the given face
+        if (!isValidSlice(slice, charToFace(*(moves + i)))) {
+          return false;
+        }
+        //Skip all subsequent characters (there might be an optional 2 after
+        //the move's letter), but we know from the regex that the move is valid.
+        //Hence it is safe to skip all subsequent characters, while parsing
+        //closing brackets and their respective numbers
         while (!regex_match((moves + i), separator)) {
           if (*(moves + i) == ')') {
             nOpenBraces--;
@@ -344,6 +396,7 @@ int main() {
   cout << 1 - map(0) <<  " " << 1 - map(1) << " " << 1 - map(2) << " \n";
   cout << map2(0) <<  " " << map2(1) << " " << map2(2) << " \n\n\n";
   RubiksCube c(3);
+//  c.move(YZ, 1, CLOCKWISE);
 //  c.print();
 //  for (int l = 0; l < 1; ++l) {
 //    for (int i = 0; i < 3; ++i) {
@@ -355,18 +408,22 @@ int main() {
 //  }
   cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
 //  c.print();
-//  c.move(YZ, 2, CLOCKWISE);
-//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-//  c.print();
-//  c.move(XY, 2, CLOCKWISE);
-//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-//  c.print();
-//  c.move(YZ, 0, ANTI_CLOCKWISE);
-//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-//  c.print();
-//  c.move(XY, 0, ANTI_CLOCKWISE);
-//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-//  c.print();
+  //F
+  c.move(YZ, 2, CLOCKWISE);
+  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+  c.print();
+  //R
+  c.move(XY, 2, CLOCKWISE);
+  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+  c.print();
+  //b
+  c.move(YZ, 0, ANTI_CLOCKWISE);
+  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+  c.print();
+  //l
+  c.move(XY, 0, ANTI_CLOCKWISE);
+  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+  c.print();
 //  iteratorTest();
 //  string regex_str = "([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)";
 //  string regex_str = "[^\\s]+";
@@ -381,7 +438,7 @@ int main() {
   string s = " /%[f(pL";
 //  regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
 //  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|\\))", regex_constants::icase);
-  const char arrS[] = " /%[f(pL";
+  const char arrS[] = ". 2/%[f(pL";
   const char arrMoves[][30] =
       {"((((2F2)3)4)5)6",           //Valid: Nested Brackets
        "(2F) R2 2d",                //Invalid: Brackets without number
@@ -401,6 +458,9 @@ int main() {
   for (int l = 0; l < 8; ++l) {
     cout << ((validateMoveSequence(arrMoves[l]))?"Valid":"Invalid") << endl;
   }
+  char *test;
+  long a = strtol(arrS + 1, &test, 10);
+  cout << a << "------>" << *test << endl;
   return 0;
 }
 

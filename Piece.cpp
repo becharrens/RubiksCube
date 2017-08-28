@@ -2,6 +2,8 @@
 #include <cstring>
 #include "Piece.h"
 
+using namespace std;
+
 Piece::Piece() {
   //TODO: verify
   memset(colours, NO_COLOUR, MAX_N_COLOURS);

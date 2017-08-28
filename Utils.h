@@ -9,8 +9,6 @@
 
 #define XOR(a, b) (a && (!b)) || ((!a) && b)
 
-using namespace std;
-
 bool isInRange(int val, int uBound, int lBound);
 
 /**

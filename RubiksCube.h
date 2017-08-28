@@ -5,12 +5,13 @@
 #ifndef RUBIKSCUBE_RUBIKSCUBE_H
 #define RUBIKSCUBE_RUBIKSCUBE_H
 
+#include <regex>
+
 #include "Piece.h"
 #include "LinkedList.h"
 #include "Utils.h"
 
 #define SIDES_IN_SQUARE 4
-#define FIRST_ORDERING_COND(isClockwise, isInFirstHalf, isPlaneXZ) isClockwise && (XOR(isInFirstHalf, isPlaneXZ))
 
 typedef enum roationDir {
     CLOCKWISE, ANTI_CLOCKWISE
@@ -21,9 +22,21 @@ typedef enum moveName {
 } moveName;
 
 typedef enum faceName {
-    UP, LEFT, FRONT, DOWN, RIGHT, BACK
+    UP, LEFT, FRONT, DOWN, RIGHT, BACK, VOID
 } faceName;
 
+typedef struct rubiksMove {
+    bool isHalfTurn;
+    rotationDir dir;
+    plane rotationPlane;
+    int slice;
+    rubiksMove(rotationDir dir1, plane rotPlane, int cubeSlice) {
+      rubiksMove(false, dir1, rotPlane, cubeSlice);
+    }
+    rubiksMove(bool halfTurn, rotationDir dir1, plane rotPlane, int cubeSlice) :
+        isHalfTurn(halfTurn), dir(dir1), rotationPlane(rotPlane),
+        slice(cubeSlice) {}
+} rubiksMove;
 
 /**
  * A Rubik's cube implementation where the cube is represented as 3D,
@@ -51,6 +64,12 @@ class RubiksCube {
     int getSide();
     void print();
   private:
+    bool isValidSlice(int slice, moveName move);
+    static moveName charToMove(char move);
+    bool validateMoveSequence(const char *moves);
+    bool applyMoveSequence(const char *moves);
+    rubiksMove *parseMove(const char *moves, int &disp);
+    void parseRepeatedSequence(const char *moves, int &disp);
     int side;
     Piece ***cube;
     void rotateFace(plane rotPlane, int slice, rotationDir direction);
@@ -58,11 +77,7 @@ class RubiksCube {
     void swapPieces(int *coord1, int *coord2);
     void initSolvedCube();
     void getRotationIndices(int **indicesArr, plane rotPlane, int slice,
-                            int side, rotationDir direction, int r, int c);
-    static void getClockwiseRotationIndices(int **indicesArr, plane rotPlane,
-                                     int r, int c, int side);
-    static void getAntiClockwiseRotationIndices(int **indicesArr, plane rotPlane,
-                                     int r, int c, int side);
+                            rotationDir direction, int r, int c);
     static void printFaceName(faceName face);
 //    Piece **allocateFace(int side);
 };

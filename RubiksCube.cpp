@@ -1,7 +1,3 @@
-//
-// Created by Benito Echarren on 29/06/2017.
-//
-
 #include "RubiksCube.h"
 
 /**

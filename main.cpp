@@ -335,25 +335,25 @@ moveName getMoveName(char c) {
 //  return nullptr;
 //}
 
-string::iterator applyNextMove(string moves, string::iterator iter) {
-  while (*iter == ' ' && iter < moves.end()) {
-    iter++;
-  }
-  int displaceMent;
-  if (*iter == '(') {
-//    iter = parseMoveSequence(moves, iter);
-  } else if (!isalnum(*iter)) {
-    while (*iter != ' ' && iter < moves.end()) {
-      iter++;
-    }
-    return iter;
-//    moveName move = getMoveName(*iter);
+//string::iterator applyNextMove(string moves, string::iterator iter) {
+//  while (*iter == ' ' && iter < moves.end()) {
 //    iter++;
-  } else if (isnumber(*iter)) {
-
-  }
-  return nullptr;
-}
+//  }
+//  int displaceMent;
+//  if (*iter == '(') {
+////    iter = parseMoveSequence(moves, iter);
+//  } else if (!isalnum(*iter)) {
+//    while (*iter != ' ' && iter < moves.end()) {
+//      iter++;
+//    }
+//    return iter;
+////    moveName move = getMoveName(*iter);
+////    iter++;
+//  } else if (isnumber(*iter)) {
+//
+//  }
+//  return nullptr;
+//}
 
 
 bool applyMoves(string moves) {
@@ -364,69 +364,69 @@ bool applyMoves(string moves) {
   return true;
 }
 
-/**
- * PRE: The move sequence has been validated beforehand (the move sequence is
- * valid)
- * Assuming that the precondition holds and that the character pointed to by
- * displacement in moves is the beginning of a bracketed sequence, the function
- * will parse the move sequence, isolating all the moves and then applying the
- * move sequence the required number of times. When the function terminates,
- * the character at displacement is the first character after the move sequence.
- * @param moves A pointer to the beginning of the moves string
- * @param disp The character displacement from the start of the string
- */
-forward_list<rubiksMove *>::const_iterator parseSequence(const char *moves, int &disp,
-                   forward_list<rubiksMove *> moveList,
-              forward_list<rubiksMove *>::const_iterator iter) {
-  //Check if the given starting point is in fact the start of a repeated move
-  //sequence
-  while (disp < strlen(moves)) {
-
-  }
-  if (*(moves + disp) == '(') {
-    //Skip the '('
-    disp++;
-    forward_list<rubiksMove *>::const_iterator a;
-    int nRepetitions = 0;
-    char *savePtr;
-    bool closingBraceFound = false;
-    //Declare the vector to store the moves in the repeated sequence and reserve
-    //space to store a small number of them
-    vector<rubiksMove *> moveVec;
-    moveVec.reserve(5);
-    while (!closingBraceFound) {
-      //Iterate through the the string, looking for the start of a move or the
-      //end of the sequence. Spaces are skipped
-      if (!isspace(*(moves + disp))) {
-        if (*(moves + disp) == ')') {
-          //If a closing brace is found then the move sequence must end, so
-          //parse the number of repetitions and update the disp so it points to
-          //to the first character after the number
-          closingBraceFound = true;
-          nRepetitions = (int) strtol(moves + disp + 1, &savePtr, 10);
-          disp = (int) (savePtr - moves);
-        } else if (*(moves + disp) == '(') {
-          //Start of the move. Parse it and add the parsed information to the
-          //vector
-//          moveVec.push_back(parseMove(moves, disp));
-        }
-      }
-    }
-    //Repeat the move sequence nRepetition times
-    for (int i = 0; i < nRepetitions; i++) {
-      for (int j = 0; j < moveVec.size(); ++j) {
-        //Apply each move (90 degree turns in the appropriate direction)
-//        move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
-        if (moveVec[j]->isHalfTurn) {
-          //Double turn: apply the same turn again
-//          move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
-        }
-      }
-    }
-    moveVec.clear();
-  }
-  return nullptr;
-}
+///**
+// * PRE: The move sequence has been validated beforehand (the move sequence is
+// * valid)
+// * Assuming that the precondition holds and that the character pointed to by
+// * displacement in moves is the beginning of a bracketed sequence, the function
+// * will parse the move sequence, isolating all the moves and then applying the
+// * move sequence the required number of times. When the function terminates,
+// * the character at displacement is the first character after the move sequence.
+// * @param moves A pointer to the beginning of the moves string
+// * @param disp The character displacement from the start of the string
+// */
+//forward_list<rubiksMove *>::const_iterator parseSequence(const char *moves, int &disp,
+//                   forward_list<rubiksMove *> moveList,
+//              forward_list<rubiksMove *>::const_iterator iter) {
+//  //Check if the given starting point is in fact the start of a repeated move
+//  //sequence
+//  while (disp < strlen(moves)) {
+//
+//  }
+//  if (*(moves + disp) == '(') {
+//    //Skip the '('
+//    disp++;
+//    forward_list<rubiksMove *>::const_iterator a;
+//    int nRepetitions = 0;
+//    char *savePtr;
+//    bool closingBraceFound = false;
+//    //Declare the vector to store the moves in the repeated sequence and reserve
+//    //space to store a small number of them
+//    vector<rubiksMove *> moveVec;
+//    moveVec.reserve(5);
+//    while (!closingBraceFound) {
+//      //Iterate through the the string, looking for the start of a move or the
+//      //end of the sequence. Spaces are skipped
+//      if (!isspace(*(moves + disp))) {
+//        if (*(moves + disp) == ')') {
+//          //If a closing brace is found then the move sequence must end, so
+//          //parse the number of repetitions and update the disp so it points to
+//          //to the first character after the number
+//          closingBraceFound = true;
+//          nRepetitions = (int) strtol(moves + disp + 1, &savePtr, 10);
+//          disp = (int) (savePtr - moves);
+//        } else if (*(moves + disp) == '(') {
+//          //Start of the move. Parse it and add the parsed information to the
+//          //vector
+////          moveVec.push_back(parseMove(moves, disp));
+//        }
+//      }
+//    }
+//    //Repeat the move sequence nRepetition times
+//    for (int i = 0; i < nRepetitions; i++) {
+//      for (int j = 0; j < moveVec.size(); ++j) {
+//        //Apply each move (90 degree turns in the appropriate direction)
+////        move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
+//        if (moveVec[j]->isHalfTurn) {
+//          //Double turn: apply the same turn again
+////          move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
+//        }
+//      }
+//    }
+//    moveVec.clear();
+//  }
+//  return nullptr;
+//}
 
 int main() {
 //  cout << "Hello, World!" << endl;

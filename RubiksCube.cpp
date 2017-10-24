@@ -1,7 +1,3 @@
-//
-// Created by Benito Echarren on 29/06/2017.
-//
-
 #include "RubiksCube.h"
 
 /**
@@ -327,7 +323,6 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
   }
 }
 
-//TODO: Finish commenting
 /**
  * Checks if the number for a given slice is correct or not. It verifies that
  * The slice is non negative and refers to a slice in the half of the cube

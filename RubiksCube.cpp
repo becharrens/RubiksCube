@@ -323,7 +323,6 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
   }
 }
 
-//TODO: Finish commenting
 /**
  * Given a move sequence represented as a char array (c-style string), it goes
  * through the string, verifying that all the moves, if any, in it are valid,

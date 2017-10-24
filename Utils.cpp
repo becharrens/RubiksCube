@@ -1,7 +1,7 @@
 //
 // Created by Benito Echarren on 17/07/2017.
 //
-
+#include <cstring>
 #include "Utils.h"
 
 /**
@@ -38,21 +38,13 @@ void assignCoord(int *coord, int skipIdx, int firstVal, int secondVal) {
 }
 
 /**
- * This function skips all the spaces starting from the element the iterator
- * points to and returns an iterator pointing to the first non-space character
- * in the string or, if there isn't one, s.end()
- * @param s the string which is being iterated through
- * @param iter the iterator pointing to the starting element of the iteration
- * @return An iterator to the first non-space character in the string or s.end()
- * if there are none
+ * Given a string and a non-negative integer, it returns the string resulting
+ * from concatenating the string with itself as many time as specified (repeat
+ * the string as many times as required)
+ * @param s The string to repeat
+ * @param times The number of times the string is to be repeated
+ * @return The string resulting from repeating s times times
  */
-string::iterator skipSpaces(string s, string::iterator iter) {
-  while (isspace(*iter) && iter < s.end()) {
-    iter++;
-  }
-  return iter;
-}
-
 string repeat(string s, int times) {
   string result;
   for (int i = 0; i < times; i++) {

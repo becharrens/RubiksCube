@@ -8,7 +8,6 @@
 #include <regex>
 
 #include "Piece.h"
-#include "LinkedList.h"
 #include "Utils.h"
 
 #define SIDES_IN_SQUARE 4
@@ -72,13 +71,12 @@ class RubiksCube {
     int side;
     Piece ***cube;
     void rotateFace(plane rotPlane, int slice, rotationDir direction);
-    Piece ***allocateCube(int side);
     void swapPieces(int *coord1, int *coord2);
     void initSolvedCube();
     void getRotationIndices(int **indicesArr, plane rotPlane, int slice,
                             rotationDir direction, int r, int c);
     static void printFaceName(faceName face);
-//    Piece **allocateFace(int side);
+    bool validateMoveSequenceTests();
 };
 
 

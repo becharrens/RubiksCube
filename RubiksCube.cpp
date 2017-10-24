@@ -9,7 +9,6 @@ RubiksCube::RubiksCube(int side) {
   //Allocate space for the cube
   this->side = side;
   cube = alloc3DArray<Piece>(side, side, side);
-//  cube = allocateCube(side);
   initSolvedCube();
 }
 
@@ -66,23 +65,6 @@ void RubiksCube::rotateFace(plane rotPlane, int slice, rotationDir direction) {
   //Free the allocated array
   delete swapIndices[0];
   delete swapIndices;
-}
-
-/**
- * Allocates memory for a side x side x side cube. It creates side pointers
- * which will point to a different slice of the cube, and then assign each
- * pointer to an allocated slice
- * @param side the number of pieces in each of the cubes edges
- * @return a pointer to the cube represented as a piece 3D array
- */
-Piece ***RubiksCube::allocateCube(int side) {
-  //Allocates space for the face pointers
-  Piece ***cube = new Piece **[side];
-  for (int i = 0; i < side; ++i) {
-    //Assign each face pointer to an allocated face/slice of the cube
-    cube[i] = alloc2DArray<Piece>(side, side);
-  }
-  return cube;
 }
 
 void RubiksCube::swapPieces(int *coord1, int *coord2) {
@@ -162,10 +144,6 @@ void RubiksCube::print() {
   coord[5][0] = 0;
   int iInc;
   int jInc;
-  int rLBound;
-  int rUBound;
-  int cLBound;
-  int cUBound;
   //Iterate through the 6 different faces
   for (int k = 0; k < 6; ++k) {
     printFaceName((faceName) k);
@@ -309,14 +287,14 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
   if (XOR(isClockwise, (XOR(sliceInFirstHalf, isPlaneXZ)))) {
     //Clockwise rotation assignments
     //DEBUG
-    cout << "0 1 2 3" << endl;
+//    cout << "0 1 2 3" << endl;
     //DEBUG
     assignCoord(indicesArr[1], rotPlane, c, side - r - 1);
     assignCoord(indicesArr[2], rotPlane, side - c - 1, r);
   } else {
     //Anti-clockwise rotation assignments
     //DEBUG
-    cout << "0 2 1 3" << endl;
+//    cout << "0 2 1 3" << endl;
     //DEBUG
     assignCoord(indicesArr[1], rotPlane, side - c - 1, r);
     assignCoord(indicesArr[2], rotPlane, c, side - r - 1);
@@ -490,23 +468,35 @@ bool RubiksCube::validateMoveSequence(const char *moves) {
   return (nOpenBraces <= 0);
 }
 
-//TODO: Finish commenting
+/**
+ * Given a move sequence, it tries to apply all the moves in order. If the
+ * sequence has a syntax error, the function fails to apply any moves. The
+ * function reports the success or failure of applying the moves. The move
+ * sequence is first expanded before iterating through it an applying the moves
+ * in order
+ * @param moves The string containing the moves to be applied
+ * @return true if the function has successfully applied the function, false
+ * otherwise
+ */
 bool RubiksCube::applyMoveSequence(const char *moves) {
+  //If the move sequence is invalid exit with failure
   if (!validateMoveSequence(moves)) {
     return false;
   }
 
   int disp = 0;
   int &dispRef = disp;
+  //Expand all the repeated moves
   string expandedMoves = expandMoveSequence(moves, dispRef);
 
+  //Convert the resulting string to a cstring
   const char *expandedMovesCStr = expandedMoves.c_str();
   disp = 0;
   rubiksMove *nextMove;
 
+  //Iterate through the moves, applying each one in turn
   while (disp < strlen(expandedMovesCStr)) {
     if (!isspace(*(expandedMovesCStr + disp))) {
-      //TODO: FIX D
       nextMove = parseMove(expandedMovesCStr, dispRef);
       move(nextMove->rotationPlane, nextMove->slice, nextMove->dir);
       if (nextMove->isHalfTurn) {
@@ -592,3 +582,22 @@ rubiksMove *RubiksCube::parseMove(const char *moves, int &disp) {
   return move;
 }
 
+bool RubiksCube::validateMoveSequenceTests() {
+  const char arrMoves[][30] =
+      {"((((2F2)3)4)5)6",           //Valid: Nested Brackets
+       "(2F) R2 2d",                //Invalid: Brackets without number
+       "((F r2)3 L2)2 U)4",         //Invalid: Too many closing brackets
+       "(F (R2 (F (20b2 D)3 D)4 R", //Invalid: Too many opening brackets
+       "(R2 2F)3 (R U2)300 l2",     //Valid: Brackets and moves
+       "(D2 G2 R2 L u d)",          //Invalid: Invalid moves
+       "D3 d r2 b3",                //Invalid: Non-2 number after move
+       "2(R2 L2 2R2 U2)2 D L U2"};  //Invalid: Number before opening braces
+  return validateMoveSequence(arrMoves[0]) &&
+      !validateMoveSequence(arrMoves[1]) &&
+      !validateMoveSequence(arrMoves[2]) &&
+      !validateMoveSequence(arrMoves[3]) &&
+      validateMoveSequence(arrMoves[4]) &&
+      !validateMoveSequence(arrMoves[5]) &&
+      !validateMoveSequence(arrMoves[6]) &&
+      !validateMoveSequence(arrMoves[7]);
+}

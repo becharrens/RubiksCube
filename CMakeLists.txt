@@ -11,10 +11,6 @@ set(SOURCE_FILES
         Piece.h
         RubiksCube.cpp
         RubiksCube.h
-        LinkedList.cpp
-        LinkedList.h
         Utils.cpp
-        Utils.h
-        Node.cpp
-        Node.h LinkedListTests.cpp LinkedListTests.h SwapIndicesTuple.cpp SwapIndicesTuple.h)
+        Utils.h)
 add_executable(RubiksCube ${SOURCE_FILES})

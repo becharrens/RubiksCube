@@ -81,6 +81,5 @@ void assignCoord(int *coord, int skipIdx, int firstVal, int secondVal);
 string repeat(string s, int times);
 
 string expandMoveSequence(const char *moves, int &disp);
-//string::iterator skipSpaces(string s, string::iterator iter);
 
 #endif //RUBIKSCUBE_UTILS_H

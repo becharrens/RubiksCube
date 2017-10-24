@@ -63,13 +63,12 @@ class RubiksCube {
     void move(plane rotPlane, int slice, rotationDir direction);
     int getSide();
     void print();
+    bool applyMoveSequence(const char *moves);
   private:
     bool isValidSlice(int slice, moveName move);
     static moveName charToMove(char move);
     bool validateMoveSequence(const char *moves);
-    bool applyMoveSequence(const char *moves);
     rubiksMove *parseMove(const char *moves, int &disp);
-    void parseRepeatedSequence(const char *moves, int &disp);
     int side;
     Piece ***cube;
     void rotateFace(plane rotPlane, int slice, rotationDir direction);

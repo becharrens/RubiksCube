@@ -10,13 +10,32 @@
 #include "LinkedListTests.h"
 #include "SwapIndicesTuple.h"
 
+#include <forward_list>
+
 using namespace std;
 
+struct C {
+};
+
+struct A : C {
+    int x;
+public:
+    A(int x1) : x(x1) {};
+};
+
+struct B : C {
+    int y;
+public:
+    B(int y1) : y(y1) {};
+};
+
 string::iterator applyNextMove(string moves, string::iterator iter);
+
 string::iterator applyNextMove(string moves, string::iterator iter);
 
 static const regex faceMove("[ULFDRB](2| |$)", regex_constants::icase);
-static const regex internalMove("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)", regex_constants::icase);
+static const regex internalMove("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)",
+                                regex_constants::icase);
 
 string mapIdxToCoords(int idx) {
   return to_string(idx / side) + ", " + to_string(idx % side);
@@ -162,13 +181,14 @@ faceName charToFace(char face) {
 
 bool isValidSlice(int slice, faceName face) {
   return ((slice >= 0) && (slice < side / 2)) ||
-      (((face + 1) / 3 == 1) && slice == side / 2);
+         (((face + 1) / 3 == 1) && slice == side / 2);
 }
 
 bool validateMoveSequence(const char *moves) {
   int nOpenBraces = 0;
   regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
-  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|((\\)[1-9]([0-9]*)?)+)).*", regex_constants::icase);
+  regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|((\\)[1-9]([0-9]*)?)+)).*",
+                  regex_constants::icase);
   regex separator("( |$).*");
   int slice;
   char *savePtr;
@@ -201,7 +221,7 @@ bool validateMoveSequence(const char *moves) {
         slice = (int) strtol(moves + i, &savePtr, 10);
         //If a slice has been assigned with value <= 1 with the pointer having
         //moved, it means that the move was invalid
-        if ((slice <= 1 && savePtr >  moves + i)) {
+        if ((slice <= 1 && savePtr > moves + i)) {
           return false;
         }
         //If the pointer didn't move, it means that the slice to move is an
@@ -329,9 +349,10 @@ string::iterator applyNextMove(string moves, string::iterator iter) {
     return iter;
 //    moveName move = getMoveName(*iter);
 //    iter++;
-  } else if (isnumber(*iter)){
+  } else if (isnumber(*iter)) {
 
   }
+  return nullptr;
 }
 
 
@@ -340,7 +361,71 @@ bool applyMoves(string moves) {
   while (*iter == ' ') {
     iter++;
   }
+  return true;
+}
 
+/**
+ * PRE: The move sequence has been validated beforehand (the move sequence is
+ * valid)
+ * Assuming that the precondition holds and that the character pointed to by
+ * displacement in moves is the beginning of a bracketed sequence, the function
+ * will parse the move sequence, isolating all the moves and then applying the
+ * move sequence the required number of times. When the function terminates,
+ * the character at displacement is the first character after the move sequence.
+ * @param moves A pointer to the beginning of the moves string
+ * @param disp The character displacement from the start of the string
+ */
+forward_list<rubiksMove *>::const_iterator parseSequence(const char *moves, int &disp,
+                   forward_list<rubiksMove *> moveList,
+              forward_list<rubiksMove *>::const_iterator iter) {
+  //Check if the given starting point is in fact the start of a repeated move
+  //sequence
+  while (disp < strlen(moves)) {
+
+  }
+  if (*(moves + disp) == '(') {
+    //Skip the '('
+    disp++;
+    forward_list<rubiksMove *>::const_iterator a;
+    int nRepetitions = 0;
+    char *savePtr;
+    bool closingBraceFound = false;
+    //Declare the vector to store the moves in the repeated sequence and reserve
+    //space to store a small number of them
+    vector<rubiksMove *> moveVec;
+    moveVec.reserve(5);
+    while (!closingBraceFound) {
+      //Iterate through the the string, looking for the start of a move or the
+      //end of the sequence. Spaces are skipped
+      if (!isspace(*(moves + disp))) {
+        if (*(moves + disp) == ')') {
+          //If a closing brace is found then the move sequence must end, so
+          //parse the number of repetitions and update the disp so it points to
+          //to the first character after the number
+          closingBraceFound = true;
+          nRepetitions = (int) strtol(moves + disp + 1, &savePtr, 10);
+          disp = (int) (savePtr - moves);
+        } else if (*(moves + disp) == '(') {
+          //Start of the move. Parse it and add the parsed information to the
+          //vector
+//          moveVec.push_back(parseMove(moves, disp));
+        }
+      }
+    }
+    //Repeat the move sequence nRepetition times
+    for (int i = 0; i < nRepetitions; i++) {
+      for (int j = 0; j < moveVec.size(); ++j) {
+        //Apply each move (90 degree turns in the appropriate direction)
+//        move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
+        if (moveVec[j]->isHalfTurn) {
+          //Double turn: apply the same turn again
+//          move(moveVec[j]->rotationPlane, moveVec[j]->slice, moveVec[j]->dir);
+        }
+      }
+    }
+    moveVec.clear();
+  }
+  return nullptr;
 }
 
 int main() {
@@ -370,14 +455,14 @@ int main() {
   for (int i = 0; i < side; ++i) {
     for (int j = 0; j < side; ++j) {
       for (int k = 0; k < side; ++k) {
-        cube[i][j][k] = i * side * side +  side * j + k;
+        cube[i][j][k] = i * side * side + side * j + k;
       }
     }
   }
   for (int i = 0; i < side; ++i) {
     for (int j = 0; j < side; ++j) {
       for (int k = 0; k < side; ++k) {
-        cout << "( " << i << ", " << j << ", " << k << " )  " ;
+        cout << "( " << i << ", " << j << ", " << k << " )  ";
       }
       cout << '\n';
     }
@@ -393,9 +478,9 @@ int main() {
   t.add(1, 4);
   t.add(1, 5);
   t.print();
-  cout << 1 - map(0) <<  " " << 1 - map(1) << " " << 1 - map(2) << " \n";
-  cout << map2(0) <<  " " << map2(1) << " " << map2(2) << " \n\n\n";
-  RubiksCube c(3);
+  cout << 1 - map(0) << " " << 1 - map(1) << " " << 1 - map(2) << " \n";
+  cout << map2(0) << " " << map2(1) << " " << map2(2) << " \n\n\n";
+  RubiksCube c(4);
 //  c.move(YZ, 1, CLOCKWISE);
 //  c.print();
 //  for (int l = 0; l < 1; ++l) {
@@ -406,24 +491,24 @@ int main() {
 //    c.print();
 //    c.move(YZ, 1, CLOCKWISE);
 //  }
-  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
 //  c.print();
   //F
-  c.move(YZ, 2, CLOCKWISE);
-  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-  c.print();
+//  c.move(YZ, 2, CLOCKWISE);
+//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//  c.print();
   //R
-  c.move(XY, 2, CLOCKWISE);
-  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-  c.print();
+//  c.move(XY, 2, CLOCKWISE);
+//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//  c.print();
   //b
-  c.move(YZ, 0, ANTI_CLOCKWISE);
-  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-  c.print();
+//  c.move(YZ, 0, ANTI_CLOCKWISE);
+//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//  c.print();
   //l
-  c.move(XY, 0, ANTI_CLOCKWISE);
-  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
-  c.print();
+//  c.move(XY, 0, ANTI_CLOCKWISE);
+//  cout << "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n";
+//  c.print();
 //  iteratorTest();
 //  string regex_str = "([1-9]([0-9]*)?)?[ULFDRB][2]?( |$)";
 //  string regex_str = "[^\\s]+";
@@ -456,11 +541,39 @@ int main() {
 //    }
 //  }
   for (int l = 0; l < 8; ++l) {
-    cout << ((validateMoveSequence(arrMoves[l]))?"Valid":"Invalid") << endl;
+    cout << ((validateMoveSequence(arrMoves[l])) ? "Valid" : "Invalid") << endl;
+  }
+//  struct A yes;
+//  struct B no;
+//  cout << typeid(no).name() << " " << typeid(yes).name() << endl;
+//  if (typeid(no) == typeid(struct B)) {
+//    cout << "Upcasting works" << endl;
+//  }
+  forward_list<struct C *> l;
+  struct B *q;
+  struct A *w;
+  for (int i = 0; i < 3; i++) {
+    q = new struct B(2 * i);
+    w = new struct A(2 * i + 1);
+    l.push_front(q);
+    l.push_front(w);
   }
   char *test;
   long a = strtol(arrS + 1, &test, 10);
   cout << a << "------>" << *test << endl;
+  cout << repeat("U2 2F (R2 U2) ", 3) << endl;
+  const char ww[] = "U2 2F (R2 U2 (B2 D2)2)2";
+  int disp = 0;
+  int &ref = disp;
+  cout << expandMoveSequence(ww, ref) << endl;
+  char seq[] = "U L F D R B u l f d r b U2 L2 F2 D2 R2 B2 u2 l2 f2 d2 r2 b2 2F 2D 2R 2F2 2D2 2R2";
+  if (c.applyMoveSequence(seq)) {
+    cout << "true" << endl;
+    c.print();
+  }
+  char seq2[] = "u l U L U F u f";
+  cout << "--------------------------" << endl;
+  c.applyMoveSequence(seq2);
+  c.print();
   return 0;
 }
-

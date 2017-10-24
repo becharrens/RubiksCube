@@ -4,8 +4,6 @@
 
 #include "Utils.h"
 
-using namespace std;
-
 /**
  * Checks if a given value is within a range, that is, if it is greater than or
  * equal to the lower bound and strictly less than the upper bound
@@ -53,4 +51,50 @@ string::iterator skipSpaces(string s, string::iterator iter) {
     iter++;
   }
   return iter;
+}
+
+string repeat(string s, int times) {
+  string result;
+  for (int i = 0; i < times; i++) {
+    result += s;
+  }
+  return result;
+}
+
+/**
+ * Given a valid move sequence, it returns an equivalent move sequence where all
+ * the bracketed sequences have been expanded, so it is only a sequence moves,
+ * with no brackets
+ * @param moves A pointer to the move string
+ * @param disp A reference to the displacement with respect to the first
+ * character of the string. After the function call, the displacement will point
+ * to the first character after the current sequence has ended
+ * @return The equivalent move string to the given one, with all the brackets
+ * expanded and removed
+ */
+string expandMoveSequence(const char *moves, int &disp) {
+  string moveSeq;
+  while (disp < strlen(moves)) {
+    if (*(moves + disp) == '(') {
+      disp++;
+      moveSeq += expandMoveSequence(moves, disp);
+    } else if (*(moves + disp) == ')') {
+      disp++;
+      char *savePtr;
+      int nRepetitions = (int) strtol(moves + disp, &savePtr, 10);
+      disp = (int) (savePtr - moves);
+      string repeatedStr;
+      for (int i = 0; i < nRepetitions; ++i) {
+        repeatedStr += moveSeq;
+        repeatedStr += ' ';
+      }
+      return repeatedStr;
+    } else {
+      if (!(*(moves + disp) == ' ' && moveSeq[moveSeq.length() - 1] == ' ')) {
+        moveSeq += *(moves + disp);
+      }
+      disp++;
+    }
+  }
+  return moveSeq;
 }

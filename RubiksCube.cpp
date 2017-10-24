@@ -310,7 +310,7 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
   bool isClockwise = direction == CLOCKWISE;
   bool sliceInFirstHalf = slice < side / 2;
   bool isPlaneXZ = rotPlane == XZ;
-  if (XOR(isClockwise, XOR(sliceInFirstHalf, isPlaneXZ))) {
+  if (XOR(isClockwise, (XOR(sliceInFirstHalf, isPlaneXZ)))) {
     //Clockwise rotation assignments
     //DEBUG
     cout << "0 1 2 3" << endl;
@@ -328,6 +328,53 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
 }
 
 //TODO: Finish commenting
+/**
+ * Checks if the number for a given slice is correct or not. It verifies that
+ * The slice is non negative and refers to a slice in the half of the cube
+ * which the face represented in the move enum belongs to. If there is a middle
+ * slice, it will be referenced only by the faces F, D or R
+ * @param slice The index of the slice referenced by the move
+ * @param move The move enum representing the face referenced by the move
+ * @return true if the slice is valid or false if it isn't
+ */
+bool RubiksCube::isValidSlice(int slice, moveName move) {
+  return (isInRange(slice, 0, side / 2) ||
+         (((move + 1) / 3 == 1) && slice == side / 2));
+}
+
+/**
+ * Returns either the move enum corresponding to the character or an INVALID
+ * enum
+ * @param move The character representing the enum
+ * @return A move enum corresponding to the character or an INVALID move enum
+ * if the character doesn't represent a valid move
+ */
+moveName RubiksCube::charToMove(char move) {
+  switch (move) {
+    case 'U':
+    case 'u':
+      return U;
+    case 'L':
+    case 'l':
+      return L;
+    case 'F':
+    case 'f':
+      return F;
+    case 'D':
+    case 'd':
+      return D;
+    case 'R':
+    case 'r':
+      return R;
+    case 'B':
+    case 'b':
+      return B;
+    default:
+      //Invalid move
+      return INVALID;
+  }
+}
+
 /**
  * Given a move sequence represented as a char array (c-style string), it goes
  * through the string, verifying that all the moves, if any, in it are valid,
@@ -360,14 +407,14 @@ void RubiksCube::getRotationIndices(int **indicesArr, plane rotPlane, int slice,
  */
 bool RubiksCube::validateMoveSequence(const char *moves) {
   int nOpenBraces = 0;
+  int nRepetitions;
   regex invalidChar("([^(ULFDRB0-9\\(\\))]).*", regex_constants::icase);
   regex moveRegex("([1-9]([0-9]*)?)?[ULFDRB][2]?( |$|((\\)[1-9]([0-9]*)?)+)).*",
                   regex_constants::icase);
-  regex separator("( |$).*");
+  regex afterMoveRegex("( |$|\\)).*");
   int slice;
   char *savePtr;
   for (int i = 0; i < strlen(moves); i++) {
-//    cout << *(moves + i) << endl;
     if (!isspace(*(moves + i))) {
       //If invalid character then the whole move sequence is invalid
       if (regex_match((moves + i), invalidChar)) {
@@ -400,7 +447,7 @@ bool RubiksCube::validateMoveSequence(const char *moves) {
           return false;
         }
         //If the pointer didn't move, it means that the slice to move is an
-        //outer slice, it is already 0, otherwise, it is one more than the index
+        //outer slice, it is already 0. Otherwise, it is one more than the index
         //of the slice referenced
         if (slice != 0) {
           slice--;
@@ -411,21 +458,32 @@ bool RubiksCube::validateMoveSequence(const char *moves) {
         if (!isValidSlice(slice, charToMove(*(moves + i)))) {
           return false;
         }
-        //Skip all subsequent characters (there might be an optional 2 after
-        //the move's letter), but we know from the regex that the move is valid.
-        //Hence it is safe to skip all subsequent characters, while parsing
-        //closing brackets and their respective numbers
-        while (!regex_match((moves + i), separator)) {
-          //TODO: Verify that the number of repetitions after the closing
-          //TODO: bracket is > 1
-          if (*(moves + i) == ')') {
-            nOpenBraces--;
-            if (nOpenBraces < 0) {
-              //Too many closing braces
-              return false;
-            }
-          }
+
+        //Skip the move letter and the optional 2 after it. After the move there
+        //can only be three characters: EOF, ' ' or ')'. Skip all the characters
+        //until you get to it.
+        while (!regex_match((moves + i), afterMoveRegex)) {
           i++;
+        }
+
+        //If the character after the move is a closing brace, verify the number
+        //of closing and opening braces and check the validity of the number of
+        //repetitions
+        if (*(moves + i) == ')') {
+          nOpenBraces--;
+          if (nOpenBraces < 0) {
+            //Too many closing braces
+            return false;
+          }
+          //Parse number of repetitions. Add extra 1 because *(moves + i) points
+          //to the closing brace
+          nRepetitions = (int) strtol(moves + i + 1, &savePtr, 10);
+          if (nRepetitions <= 1) {
+            return false;
+          }
+          //update the displacement
+          i = (int) (savePtr - moves);
+          break;
         }
       } else {
         //Invalid move syntax
@@ -433,155 +491,38 @@ bool RubiksCube::validateMoveSequence(const char *moves) {
       }
     }
   }
+  //Check if too many opening braces
   return (nOpenBraces <= 0);
 }
 
-bool RubiksCube::applyMoveSequence(const char *moves) {
-  if (validateMoveSequence(moves)) {
-    regex separator("( |$).*");
-    int slice;
-    char *savePtr;
-    for (int i = 0; i < strlen(moves); i++) {
-      if (!isspace(*(moves + i))) {
-        //Take into account all consecutive opening braces, keeping track of them
-        //as it skips over them
-        if (*(moves + i) == '(') {
-          parseRepeatedSequence(moves, i);
-        }
-
-        //If the string matches the move regex then skip the the move and update
-        //the iterator (i)
-        if (regex_match((moves + i), moveRegex)) {
-          //The previous match guarantees that there is a valid move, followed
-          //a space, end of line character or any number of nested closing
-          //brackets followed by numbers indicating how many times the moves
-          //inside the brackets should be repeated. Hence the move finishes when
-          //the iteration meets a space or EOL character (the closing brace(s) is
-          //taken to be part of the move). The loop terminates at a non-move
-          //character, which means that increasing the iterator won't skip over an
-          //important character
-
-          slice = (int) strtol(moves + i, &savePtr, 10);
-          //If a slice has been assigned with value <= 1 with the pointer having
-          //moved, it means that the move was invalid because the leading number
-          //was invalid
-          if ((slice <= 1 && savePtr >  moves + i)) {
-            return false;
-          }
-          //If the pointer didn't move, it means that the slice to move is an
-          //outer slice, it is already 0, otherwise, it is one more than the index
-          //of the slice referenced
-          if (slice != 0) {
-            slice--;
-          }
-          //Update the offset so that the pointer will point to the next character
-          i = (int) (savePtr - moves);
-          //Check if the slice referenced is within the bounds for the given face
-          if (!isValidSlice(slice, charToMove(*(moves + i)))) {
-            return false;
-          }
-          //Skip all subsequent characters (there might be an optional 2 after
-          //the move's letter), but we know from the regex that the move is valid.
-          //Hence it is safe to skip all subsequent characters, while parsing
-          //closing brackets and their respective numbers
-          while (!regex_match((moves + i), separator)) {
-            if (*(moves + i) == ')') {
-              nOpenBraces--;
-              if (nOpenBraces < 0) {
-                //Too many closing braces
-                return false;
-              }
-            }
-            i++;
-          }
-        } else {
-          //Invalid move syntax
-          return false;
-        }
-      }
-    }
-    return (nOpenBraces <= 0);
-  }
-  return false;
-}
-
-/**
- * Checks if the number for a given slice is correct or not. It verifies that
- * The slice is non negative and refers to a slice in the half of the cube
- * which the face represented in the move enum belongs to. If there is a middle
- * slice, it will be referenced only by the faces F, D or R
- * @param slice The index of the slice referenced by the move
- * @param move The move enum representing the face referenced by the move
- * @return true if the slice is valid or false if it isn't
- */
-bool RubiksCube::isValidSlice(int slice, moveName move) {
-  return (isInRange(slice, 0, side / 2) ||
-         (((move + 1) / 3 == 1) && slice == side / 2);
-}
-
-/**
- * Returns either the move enum corresponding to the character or an INVALID
- * enum
- * @param move The character representing the enum
- * @return A move enum corresponding to the character or an INVALID move enum
- * if the character doesn't represent a valid move
- */
-moveName RubiksCube::charToMove(char move) {
-  switch (move) {
-    case 'U':
-      return U;
-    case 'L':
-      return L;
-    case 'F':
-      return F;
-    case 'D':
-      return D;
-    case 'R':
-      return R;
-    case 'B':
-      return B;
-    default:
-      //Invalid move
-      return INVALID;
-  }
-}
-
 //TODO: Finish commenting
-/**
- * PRE: The move sequence has been validated beforehand (the move sequence is
- * valid)
- * Assuming that the precondition holds and that the character pointed to by
- * displacement in moves is the beginning of a bracketed sequence, the function
- * will parse the move sequence, isolating all the moves and then applying the
- * move sequence the required number of times. When the function terminates,
- * the character at displacement is the first character after the move sequence.
- * @param moves A pointer to the beginning of the moves string
- * @param disp The character displacement from the start of the string
- * @return
- */
-void RubiksCube::parseRepeatedSequence(const char *moves, int &disp) {
-  if (*(moves + disp) == '(') {
-    disp++;
-    int nRepetitions;
-    int slice;
-    char *savePtr;
-    bool closingBraceFound = false;
-    vector<rubiksMove> moveVec;
-    moveVec.reserve(5);
-    while (!closingBraceFound) {
-      if (!isspace(*(moves + disp))) {
-        if (*(moves + disp) == ')') {
-          closingBraceFound = true;
-          nRepetitions = (int) strtol(moves + disp + 1, &savePtr, 10);
-          disp = (int) (savePtr - moves);
-        } else {
-
-
-          disp++;
-        }
-      }
-    }
+bool RubiksCube::applyMoveSequence(const char *moves) {
+  if (!validateMoveSequence(moves)) {
+    return false;
   }
+
+  int disp = 0;
+  int &dispRef = disp;
+  string expandedMoves = expandMoveSequence(moves, dispRef);
+
+  const char *expandedMovesCStr = expandedMoves.c_str();
+  disp = 0;
+  rubiksMove *nextMove;
+
+  while (disp < strlen(expandedMovesCStr)) {
+    if (!isspace(*(expandedMovesCStr + disp))) {
+      //TODO: FIX D
+      nextMove = parseMove(expandedMovesCStr, dispRef);
+      move(nextMove->rotationPlane, nextMove->slice, nextMove->dir);
+      if (nextMove->isHalfTurn) {
+        move(nextMove->rotationPlane, nextMove->slice, nextMove->dir);
+      }
+      print();
+      delete nextMove;
+    }
+    disp++;
+  }
+  return true;
 }
 
 /**
@@ -590,11 +531,11 @@ void RubiksCube::parseRepeatedSequence(const char *moves, int &disp) {
  * If the precondition is met, this function parses the string starting at
  * disp from the start and breaks down the move into its different components,
  * which are stored in a struct which is returned (a pointer to it)
- * @param moves The string were all the moves are stored. When the function
+ * @param moves The string were all the moves are stored.
+ * @param disp The displacement from the beginning of the string, which should
+ * point to the first character which belongs to the move. When the function
  * terminates, disp will be the offset from the beginning such that it will
  * point to the first character in the string which isn't part of the move.
- * @param disp The displacement from the beginning of the string, which should
- * point to the first character which belongs to the move.
  * @return A pointer to the struct containing all the different parts of
  * move
  */
@@ -641,11 +582,11 @@ rubiksMove *RubiksCube::parseMove(const char *moves, int &disp) {
    */
   plane rotPlane = (plane) ((movName + 1) % 3);
   /*
-   * | U | L |    F     |    D     |    R     | B
-   * +---+---+----------+----------+----------+---
-   * enum | 0 | 1 |    2     |    3     |    4     | 5
-   * starting index| 0 | 0 | side - 1 | side - 1 | side - 1 | 0       (- subtract displacement)
-   * | + | + |    -     |    -     |    -     | +       (+ add displacement)
+   *                  | U | L |    F     |    D     |    R     | B
+   * -----------------+---+---+----------+----------+----------+---
+   *       enum       | 0 | 1 |    2     |    3     |    4     | 5
+   *  starting index  | 0 | 0 | side - 1 | side - 1 | side - 1 | 0
+   * +/- displacement | + | + |    -     |    -     |    -     | +
    */
   if ((movName + 1) / 3 == 1) {
     slice = side - 1 - sliceDisp;
@@ -655,3 +596,4 @@ rubiksMove *RubiksCube::parseMove(const char *moves, int &disp) {
   rubiksMove *move = new rubiksMove(isHalfTurn, direction, rotPlane, slice);
   return move;
 }
+

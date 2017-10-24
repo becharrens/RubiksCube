@@ -9,6 +9,8 @@
 
 #define XOR(a, b) (a && (!b)) || ((!a) && b)
 
+using namespace std;
+
 bool isInRange(int val, int uBound, int lBound);
 
 /**
@@ -76,6 +78,9 @@ T ***alloc3DArray(int depth, int height, int width) {
 
 void assignCoord(int *coord, int skipIdx, int firstVal, int secondVal);
 
-string::iterator skipSpaces(string s, string::iterator iter);
+string repeat(string s, int times);
+
+string expandMoveSequence(const char *moves, int &disp);
+//string::iterator skipSpaces(string s, string::iterator iter);
 
 #endif //RUBIKSCUBE_UTILS_H

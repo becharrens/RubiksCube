@@ -502,7 +502,6 @@ bool RubiksCube::applyMoveSequence(const char *moves) {
       if (nextMove->isHalfTurn) {
         move(nextMove->rotationPlane, nextMove->slice, nextMove->dir);
       }
-      print();
       delete nextMove;
     }
     disp++;
